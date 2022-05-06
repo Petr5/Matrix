@@ -1,0 +1,194 @@
+//    matrix matrix::operator* (const matrix& other) const{
+//        auto start = std::chrono::high_resolution_clock::now();
+//        if (x_size != other.y_size){
+//            std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
+//            exit(1);
+//        }
+//        {
+//            matrix res(y_size, other.x_size);
+//            std::thread th1([&](){ all_row_multiply_half_column(other, res);});
+//            for (size_t row = 0; row < y_size; ++row)
+//                for (size_t column = other.x_size / 2; column < other.x_size ; ++column){
+//                    double sum = 0;
+//                    for (size_t g = 0; g < x_size; ++g)
+//                        sum += array[row][g] * other.array[g][column];
+//                    res.array[row][column] = sum;
+//                }
+//            th1.join();
+//            auto end = std::chrono::high_resolution_clock::now();
+//            std::chrono::duration<float> duration = end - start;
+//            std::cout << "Multiply matrix with ONE EXTRA THREAD  have taken " << duration.count() << " second" << std::endl;
+//            return res;
+//        }
+//    }
+
+//    matrix matrix::operator* (const matrix& other) const{
+//        auto start = std::chrono::high_resolution_clock::now();
+//        if (x_size != other.y_size){
+//            std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
+//            exit(1);
+//        }
+//        else{
+//            double s = 0;
+//            matrix res(y_size, other.x_size);
+//
+//            for (int g = 0; g < y_size; ++g)
+//                for (int j = 0; j < other.x_size; ++j){
+//                    for (int i = 0; i < x_size; ++i) s += array[g][i] * other.array[i][j];
+//                    res.array[g][j] = s; s = 0;
+//                }
+//            auto end = std::chrono::high_resolution_clock::now();
+//            std::chrono::duration<float> duration = end - start;
+//            std::cout << "Multiply matrix without use thred have taken " << duration.count() << " second" << std::endl;
+//           return res;
+//        }
+//    }
+
+//    matrix matrix::operator* (const matrix& other) const{
+//        auto start = std::chrono::high_resolution_clock::now();
+//        if (x_size != other.y_size){
+//            std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
+//            exit(1);
+//        }
+//        else{
+//            matrix res(y_size, other.x_size);
+//            std::vector<std::thread> threads;
+//            for (size_t i = 0; i < y_size ; ++i)
+//                for (size_t j = 0; j < other.x_size; ++j){
+//                    threads.emplace_back([&other, i, j, this, &res](){row_multiply_column(other, i ,j ,res); });
+//                }
+//            for (int i = 0; i < threads.size(); ++i)
+//                if (threads[i].joinable())
+//                    threads[i].join();
+//
+//            auto end = std::chrono::high_resolution_clock::now();
+//            std::chrono::duration<float> duration = end - start;
+//            std::cout << "Multiply matrix with n^2 thread have taken " << duration.count() << " second" << std::endl;
+//            return res;
+//        }
+//    }
+
+    matrix matrix::operator* (const matrix& other) const{
+        auto start = std::chrono::high_resolution_clock::now();
+        if (x_size != other.y_size){
+            std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
+            exit(1);
+        }
+        {
+            matrix res(y_size, other.x_size);
+            std::vector<std::thread> threads;
+            for (size_t i = 0; i < 3; ++i)
+            {
+                threads.emplace_back([&other, &res, i, this](){half_row_multiply_half_column(other, res, i); });
+            }
+            for (size_t row = y_size / 2; row < y_size; ++row)
+                for (size_t column =  other.x_size / 2; column < other.x_size ; ++column){
+                    double sum = 0;
+                    for (size_t g = 0; g < x_size; ++g)
+                        sum += array[row][g] * other.array[g][column];
+                    res.array[row][column] = sum;
+                }
+            for (int i = 0; i < threads.size(); ++i)
+                if (threads[i].joinable())
+                    threads[i].join();
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> duration = end - start;
+            std::cout << "Multiply matrix with Four THREAD have taken " << duration.count() << " second" << std::endl;
+            return res;
+        }
+    }
+
+
+        auto start = std::chrono::high_resolution_clock::now();
+        cout << 2.7743e-310 * 9.69903e-312 << endl;
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> duration = end - start;
+        std::cout << "Multiply  2.7743e-310 * 9.69903e-312 have taken" << duration.count() << " second" << std::endl;
+        auto start2 = std::chrono::high_resolution_clock::now();
+        cout << 31319 * 19693 << endl;
+        auto end2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> duration2 = end2 - start2;
+        std::cout << "Multiply  31319 * 19693 have taken" << duration2.count() << " second" << std::endl;
+
+
+//    matrix matrix::operator* (const matrix& other) const{
+//        auto start = std::chrono::high_resolution_clock::now();
+//        if (x_size != other.y_size){
+//            std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
+//            exit(1);
+//        }
+//        else{
+//            double s = 0;
+//            matrix res(y_size, other.x_size);
+//
+//            for (int g = 0; g < y_size; ++g)
+//                for (int j = 0; j < other.x_size; ++j){
+//                    for (int i = 0; i < x_size; ++i) s += array[g][i] * other.array[i][j];
+//                    res.array[g][j] = s; s = 0;
+//                }
+//            auto end = std::chrono::high_resolution_clock::now();
+//            std::chrono::duration<float> duration = end - start;
+//            std::cout << "Multiply matrix without use thred have taken " << duration.count() << " second" << std::endl;
+//           return res;
+//        }
+//    }
+
+
+
+void matrix::row_multiply_column(const matrix& other, size_t row, size_t column, const matrix& res) const{
+        double sum = 0;
+//        std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
+        for (size_t g = 0; g < x_size; ++g)
+            sum += array[row][g] * other.array[g][column];
+        res.array[row][column] = sum;
+//        std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
+    }
+    void matrix::all_row_multiply_half_column(const matrix& other,const matrix& res) const{
+        std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
+        for (size_t row = 0; row < y_size; ++row)
+            for (size_t column = 0; column < other.x_size / 2; ++column){
+                double sum = 0;
+                for (size_t g = 0; g < x_size; ++g)
+                    sum += array[row][g] * other.array[g][column];
+                res.array[row][column] = sum;
+            }
+        std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
+    }
+    void matrix::half_row_multiply_half_column(const matrix& other,const matrix& res, size_t type) const{
+        std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
+            if (!type) {
+                for (size_t row = 0; row < y_size / 2; ++row)
+                    for (size_t column = 0; column < other.x_size / 2; ++column) {
+                        double sum = 0;
+                        for (size_t g = 0; g < x_size; ++g)
+                            sum += array[row][g] * other.array[g][column];
+                        res.array[row][column] = sum;
+                    }
+            }
+            if (type == 1) {
+
+                for (size_t row = 0; row < y_size / 2; ++row)
+                    for (size_t column = other.x_size / 2; column < other.x_size; ++column) {
+                        double sum = 0;
+                        for (size_t g = 0; g < x_size; ++g)
+                            sum += array[row][g] * other.array[g][column];
+                        res.array[row][column] = sum;
+                    }
+            }
+            if (type == 2) {
+                for (size_t row = y_size / 2; row < y_size; ++row)
+                    for (size_t column = 0; column < other.x_size / 2; ++column) {
+                        double sum = 0;
+                        for (size_t g = 0; g < x_size; ++g)
+                            sum += array[row][g] * other.array[g][column];
+                        res.array[row][column] = sum;
+                    }
+            }
+
+        std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
+    }
+
+
+      void row_multiply_column(const matrix& other, size_t row, size_t column, const matrix& res) const;
+            void all_row_multiply_half_column(const matrix& other,const matrix& res) const;
+            void half_row_multiply_half_column(const matrix& other,const matrix& res, size_t type) const;

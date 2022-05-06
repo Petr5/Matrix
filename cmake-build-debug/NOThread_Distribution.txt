@@ -1,0 +1,9 @@
+Size of square matrix	Time for multiplying, s
+5	8.59e-05
+1e1	4.11e-05
+5e1	0.0012573
+1e2	0.005546
+5e2	1.47535
+1e3	14.4887
+5e3	4255.05
+1e4	16849.8

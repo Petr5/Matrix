@@ -3,8 +3,8 @@
 
 namespace matrix{
 
-
-    matrix::matrix(const std::string& path) {
+    template <typename T>
+    matrix<T>::matrix(const std::string& path) {
         std::ifstream fin;
         fin.open(path);
         if(!fin) { // file couldn't be opened
@@ -13,24 +13,27 @@ namespace matrix{
         }
         fin >> *this;
     }
-
-    matrix::matrix(size_t Size){
+    template <typename T>
+    matrix<T>::matrix(size_t Size){
         y_size = x_size = Size;
         array = new double* [Size];
         for (int j = 0; j < Size; ++j) {
             array[j] = new double[Size];
         }
     }
-    matrix::matrix(size_t y_size, size_t x_size){
+    template <typename T>
+    matrix<T>::matrix(size_t y_size, size_t x_size){
         this->y_size= y_size; this->x_size = x_size;
         array = new double* [y_size];
         for (int j = 0; j < y_size; ++j) {
             array[j] = new double[x_size];
         }
     }
-    matrix::matrix(const matrix& other){
-        y_size = other.y_size; x_size = other.x_size;
+    template <typename T>
+    matrix<T>::matrix(const matrix& other){
         this->~matrix();
+        y_size = other.y_size; x_size = other.x_size;
+
         array = new double* [y_size];
         for (size_t i = 0; i < y_size; ++i){
             array[i] = new double [x_size];
@@ -38,23 +41,24 @@ namespace matrix{
                 array[i][j] = other.array[i][j];
         }
     }
-//    matrix::~matrix(){
-//        if (array){
-//            for (size_t i = 0; i < y_size; ++i)
-//                if (array[i]) delete [] array[i];
-//            delete [] array;
-//        }
-//
-//    }
-
-    double determinant(const matrix& matrix) {
-        if (matrix.x_size != matrix.y_size) {
+    template <typename T>
+    matrix<T>::~matrix(){
+        if (array){
+            for (size_t i = 0; i < y_size; ++i)
+                 delete [] array[i];
+            delete [] array;
+        }
+        array = nullptr;
+    }
+    template <typename T>
+    double determinant(const matrix<T>& matrix1) {
+        if (matrix1.x_size != matrix1.y_size) {
             throw std::invalid_argument("For calculate determinant matrix should be square");
         }
         else
         {
-            size_t n = matrix.x_size;
-            struct matrix temp(matrix);
+            size_t n = matrix1.x_size;
+            matrix temp(matrix1);
             double product_of_multiplying = 1;
             for (size_t row = 0; row < n; ++row)
             {
@@ -84,7 +88,8 @@ namespace matrix{
             return product_of_multiplying;
         }
     }
-    void matrix::half_row_sum_half_column(const matrix &other, const matrix &res, size_t type) const {
+    template <typename T>
+    void matrix<T>::half_row_sum_half_column(const matrix &other, const matrix &res, size_t type) const {
         std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
         if (!type) {
             for (size_t row = 0; row < y_size / 2; ++row)
@@ -106,7 +111,8 @@ namespace matrix{
         }
         std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
     }
-    void matrix::half_row_difference_half_column(const matrix &other, const matrix &res, size_t type) const{
+    template <typename T>
+    void matrix<T>::half_row_difference_half_column(const matrix<T> &other, const matrix<T> &res, size_t type) const{
         std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
         if (!type) {
             for (size_t row = 0; row < y_size / 2; ++row)
@@ -130,7 +136,8 @@ namespace matrix{
 
         std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
     }
-    void matrix::half_row_multiply_half_column(const matrix& other,const matrix& res, size_t type) const{
+    template <typename T>
+    void matrix<T>::half_row_multiply_half_column(const matrix<T>& other,const matrix<T>& res, size_t type) const{
         std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
         if (!type) {
             for (size_t row = 0; row < y_size / 2; ++row)
@@ -163,8 +170,8 @@ namespace matrix{
 
         std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
     }
-
-    matrix matrix::operator* (const matrix& other) const{
+    template <typename T>
+    matrix<T>& matrix<T>::operator* (const matrix<T>& other) const{
         auto start = std::chrono::high_resolution_clock::now();
         if (x_size != other.y_size){
             std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
@@ -194,11 +201,11 @@ namespace matrix{
         }
     }
 
-
-    matrix Gaus(const matrix& other){
+    template <typename T>
+    matrix<T> Gaus(const matrix<T>& other){
         size_t n = other.x_size;
         matrix temp(other);
-        matrix identity = matrix::identity_matrix(other.y_size);
+        matrix identity = matrix<T>::identity_matrix(other.y_size);
 
         for (size_t row = 0; row < n; ++row)
         {
@@ -236,14 +243,16 @@ namespace matrix{
         }
         return identity;
     }
-    matrix matrix::operator* (const double& a) const{
+    template <typename T>
+    matrix<T> matrix<T>::operator* (const double& a) const{
         matrix ans(y_size, x_size);
         for (size_t i = 0; i < y_size; ++i)
             for (size_t j = 0; j < x_size; ++j)
                 ans.array[i][j] = array[i][j] * a;
         return ans;
     }
-    matrix matrix::operator+ (const matrix& other) const{
+    template <typename T>
+    matrix<T>& matrix<T>::operator+ (const matrix& other) const{
         auto start = std::chrono::high_resolution_clock::now();
         if (x_size != other.x_size || y_size != other.y_size){
             std::cerr << "Error: Impossible sum up matrices which have different shape";
@@ -272,7 +281,8 @@ namespace matrix{
         }
 
     }
-    matrix matrix::operator- (const matrix& other) const{
+    template <typename T>
+    matrix<T>& matrix<T>::operator- (const matrix& other) const{
         auto start = std::chrono::high_resolution_clock::now();
         if (x_size != other.x_size || y_size != other.y_size){
             std::cerr << "Error: Impossible sum up matrices which have different shape";
@@ -300,8 +310,8 @@ namespace matrix{
             return res;
         }
     }
-
-    matrix operator!(const matrix &other) {
+    template <typename T>
+    matrix<T> operator!(const matrix<T> &other) {
         try {
             double det = determinant(other);
             if (det == 0){
@@ -314,7 +324,8 @@ namespace matrix{
         }
 
     }
-    std::istream &operator >>(std::istream &is,  matrix &matrix) {
+    template <typename T>
+    std::istream &operator >>(std::istream &is,  matrix<T> &matrix) {
         size_t y_size, x_size;
         std::cout << "Please type height and then length of matrix" << std::endl;
         is >> y_size >> x_size;
@@ -339,7 +350,8 @@ namespace matrix{
         }
         return is;
     }
-    std::ostream &operator<<(std::ostream &os, const struct matrix &matrix) {
+    template <typename T>
+    std::ostream &operator<<(std::ostream &os, const struct matrix<T> &matrix) {
         for (int i = 0; i < matrix.y_size; ++i) {
             for (int j = 0; j < matrix.x_size; ++j)
                 os << matrix.array[i][j] << "\t";
@@ -348,7 +360,8 @@ namespace matrix{
         os << std::endl;
         return os;
     }
-    std::ofstream& operator << (std::ofstream& of, const matrix & matrix){
+    template <typename T>
+    std::ofstream& operator << (std::ofstream& of, const matrix<T> & matrix){
         of << matrix.y_size << "\t" << matrix.x_size << "\n";
         for (int i = 0; i < matrix.y_size; ++i) {
             for (int j = 0; j < matrix.x_size; ++j)
@@ -357,7 +370,8 @@ namespace matrix{
         }
         return of;
     }
-    std::ifstream& operator >>(std::ifstream& fin, matrix & matrix){
+    template <typename T>
+    std::ifstream& operator >>(std::ifstream& fin, matrix<T> & matrix){
         size_t y_size, x_size;
         fin >> y_size >> x_size;
         matrix.y_size = y_size; matrix.x_size = x_size;
@@ -370,8 +384,8 @@ namespace matrix{
         }
         return fin;
     }
-
-     matrix matrix::Random_matrix(size_t y_size, size_t x_size){
+    template <typename T>
+    matrix<T>& matrix<T>::Random_matrix(size_t y_size, size_t x_size){
         srand (time(NULL));
         matrix random_matrix(y_size, x_size);
         for (size_t i = 0; i < y_size; ++i){

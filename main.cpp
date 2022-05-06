@@ -15,19 +15,24 @@ using namespace std;
 //        fout << paths[i] << "\t" << std::chrono::duration<float>(end - start).count() << endl;
 //    }
 //}
+
+template <typename T>
+void Test_All_operations(){
+    matrix::matrix<T> matrix2(matrix::matrix<T>::Random_matrix(4, 4));
+    matrix::matrix<T> matrix1(matrix::matrix<T>::Random_matrix(4, 4));
+
+    cout << matrix1; cout << matrix2;
+    cout << "That`s multiplying result" << endl << matrix1 * matrix2;
+    cout << "That`s summing result" << endl << matrix1 + matrix2;
+    cout << "That`s different result" << endl << matrix1 - matrix2;
+    cout << "That`s determinant result" << endl << determinant(matrix1);
+    cout << "That`s inverse result" << endl << !matrix1;
+//    cout << "That`s multiplying result" << endl << matrix1 * matrix2;
+}
+
 int main() {
-    matrix::matrix matrix2("4_4.txt");
-    matrix::matrix matrix1("4_4_.txt");
-    cout << matrix1;
-    cout << matrix2;
-//    try {
-//        !matrix2;
-////        cout << !matrix2;
-//    }
-//    catch(std::exception& ex){
-//        cerr << ex.what();
-//    }
-    cout << matrix1 - matrix2;
+    Test_All_operations<double>();
+
 
     return 0;
 }
