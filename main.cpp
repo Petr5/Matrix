@@ -23,16 +23,41 @@ void Test_All_operations(){
 
     cout << matrix1; cout << matrix2;
     cout << "That`s multiplying result" << endl << matrix1 * matrix2;
+    cout << "That`s different result" << '\n' << matrix2 - matrix1;
     cout << "That`s summing result" << endl << matrix1 + matrix2;
-    cout << "That`s different result" << endl << matrix1 - matrix2;
-    cout << "That`s determinant result" << endl << determinant(matrix1);
+
+    cout << "That`s determinant result" << endl << determinant(matrix1) << endl;
     cout << "That`s inverse result" << endl << !matrix1;
 //    cout << "That`s multiplying result" << endl << matrix1 * matrix2;
 }
 
 int main() {
-    Test_All_operations<double>();
-
-
+//
+////    Test_All_operations<int>();
+//    matrix::matrix<int> matrix1(4,4);
+//    matrix::matrix<int> matrix2{};
+//    fstream fin; fin.open("4_4.txt");
+//
+////    fin >> matrix1;
+////    fin >> matrix2;
+////cin >> matrix1;
+////    cout << matrix1;
+//////    cout << matrix1;
+////    matrix2 = matrix1;
+////    cout << "That`s determinant " << determinant(matrix1) << endl;
+////    cout << matrix2;
+////    cout << matrix2.array[4][0];
+////    matrix::matrix<double> matrixZ(matrix::matrix<double>::Random_matrix(3,3));
+////    matrix::matrix<double> matrixY(matrix::matrix<double>::Random_matrix(3,3));
+////    cout << matrixZ;
+////    matrixZ = matrixZ;
+////    cout << matrixZ;
+//    matrix::matrix<int>::ReadFromFile(fin, matrix2);
+//    cout << matrix2;
+    int **pointer = reinterpret_cast<int **>(1);
+//    **pointer = 1;
+    ++*pointer;
+    **pointer = 9;
+    cout << **pointer << endl; --pointer; cout << pointer;
     return 0;
 }

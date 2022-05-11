@@ -191,4 +191,10 @@ void matrix::row_multiply_column(const matrix& other, size_t row, size_t column,
 
       void row_multiply_column(const matrix& other, size_t row, size_t column, const matrix& res) const;
             void all_row_multiply_half_column(const matrix& other,const matrix& res) const;
-            void half_row_multiply_half_column(const matrix& other,const matrix& res, size_t type) const;
+            void half_row_multiply_half_column(const matrix& other,const matrix& res, size_t type) const;\
+
+
+        3	4	7	8
+        -34	4	8	11
+        -33	88	-44	0
+        6	4	7	-5
