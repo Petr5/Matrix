@@ -13,8 +13,10 @@
 #include <ctime>
 #include <mutex>
 #include <windows.h>
+#include <typeinfo>
+#include <initializer_list>
 
-using std::cout; using std::endl;
+using std::cout; using std::endl; using std::initializer_list;
 namespace matrix{
 
     template <typename T>
@@ -68,6 +70,33 @@ namespace matrix{
             }
             return matrix;
         }
+        static float measure_time(matrix<T>& first, matrix<T>& second, std::string operation, size_t count_thread){
+            auto start = std::chrono::high_resolution_clock::now();
+            if (operation == "*" || operation == "Multiply") first * second;
+            else if (operation == "-") first.difference(second, count_thread);
+            else if (operation == "+") first.sum(second, count_thread);
+            else if (operation == "==" || operation == "Equal") first.equal(second, count_thread);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> duration = end - start;
+            return duration.count();
+        }
+        matrix(initializer_list<initializer_list<T>> list){
+            y_size = list.size();
+            array = new T*[y_size];
+            size_t i = 0;
+            for (auto l : list){
+                size_t j = 0;
+                if (l.size() != x_size && x_size) throw std::runtime_error("Impossible initialize rectangle matrix by not rectangle input");
+                x_size = l.size();
+                array[i] = new T[l.size()];
+
+                for (auto el : l){
+                    array[i][j] = el;
+                    ++j;
+                }
+                ++i;
+            }
+        }
         matrix(){
             array = nullptr;
             x_size = 0;
@@ -109,6 +138,15 @@ namespace matrix{
                     this->array[i][j] = other.array[i][j];
             }
         }
+        matrix(matrix&& other) noexcept{
+            array = other.array;
+            x_size = other.x_size;
+            y_size = other.x_size;
+            other.array = nullptr;
+            other.x_size = 0;
+            other.y_size = 0;
+        }
+
         matrix<T>& operator =(const matrix& other){
             this->y_size = other.y_size; this->x_size = other.x_size;
             T** pointer;
@@ -168,7 +206,6 @@ namespace matrix{
             }
         }
         void half_row_sum_half_column(const matrix &other, const matrix &res, size_t type) const {
-            std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
             if (!type) {
                 for (size_t row = 0; row < this->y_size / 2; ++row)
                     for (size_t column = 0; column < other.x_size / 2; ++column) {
@@ -187,10 +224,8 @@ namespace matrix{
                         res.array[row][column] = this->array[row][column] + other.array[row][column];
                     }
             }
-            std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
         }
         void half_row_difference_half_column(const matrix<T> &other, const matrix<T> &res, size_t type) const{
-            std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
             if (!type) {
                 for (size_t row = 0; row < this->y_size / 2; ++row)
                     for (size_t column = 0; column < other.x_size / 2; ++column) {
@@ -210,11 +245,8 @@ namespace matrix{
                         res.array[row][column] = this->array[row][column] - other.array[row][column];
                     }
             }
-
-            std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
         }
         void half_row_multiply_half_column(const matrix<T>& other,const matrix<T>& res, size_t type) const{
-            std::cout << "STARTED " << std::this_thread::get_id() << std::endl;
             if (!type) {
                 for (size_t row = 0; row < this->y_size / 2; ++row)
                     for (size_t column = 0; column < other.x_size / 2; ++column) {
@@ -243,11 +275,8 @@ namespace matrix{
                         res.array[row][column] = sum;
                     }
             }
-
-            std::cout << "ENDED " << std::this_thread::get_id() << std::endl;
         }
         matrix<T> operator* (const matrix<T>& other) const{
-            auto start = std::chrono::high_resolution_clock::now();
             if (this->x_size != other.y_size){
                 std::cerr << "Number of columns first matrix must be equal to number of rows second matrix";
                 exit(1);
@@ -269,9 +298,6 @@ namespace matrix{
                 for (int i = 0; i < threads.size(); ++i)
                     if (threads[i].joinable())
                         threads[i].join();
-                auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<float> duration = end - start;
-                std::cout << "Multiply matrix with Four THREAD have taken " << duration.count() << " second" << std::endl;
                 return res;
             }
         }
@@ -369,9 +395,36 @@ namespace matrix{
                     res.array[i][j] = this->array[i][j] * multiplier;
             return res;
         }
+        void sum_up_some_row (const matrix& other, const matrix& res, size_t number_thread, size_t count_thread) const{
+            cout << std::this_thread::get_id() << "STARTED" << endl;
+            for (size_t i = (other.y_size / count_thread) * number_thread; i < (other.y_size / count_thread) * (number_thread + 1); ++i)
+                for (size_t j = 0; j < other.x_size; ++j)
+                    res.array[i][j] = array[i][j] +  other.array[i][j];
+            cout << std::this_thread::get_id() << "ENDED" << endl;
 
+        }
+        matrix<T> sum (const matrix& other, size_t count_thread) const {
+            if (this->x_size != other.x_size || this->y_size != other.y_size){
+                std::cerr << "Error: Impossible sum up matrices which have different shape";
+                exit(1);
+            }
+            else{
+                matrix res(this->y_size, other.x_size);
+                std::vector<std::thread> threads;
+                for (size_t i = 0; i < count_thread - 1; ++i)
+                {
+                    threads.emplace_back([this, &other, &res, i, count_thread](){ sum_up_some_row(other, res, i, count_thread);});
+                }
+                for (size_t i = (other.y_size / count_thread) * (count_thread - 1) ; i < (other.y_size / count_thread) * count_thread; ++i)
+                    for (size_t j = 0; j < other.x_size; ++j)
+                        res.array[i][j] = array[i][j] -  other.array[i][j];
+                for (size_t i = 0; i < count_thread - 1; ++i){
+                    threads[i].join();
+                }
+                return res;
+            }
+        }
         matrix<T> operator+ (const matrix& other) const{
-            auto start = std::chrono::high_resolution_clock::now();
             if (this->x_size != other.x_size || this->y_size != other.y_size){
                 std::cerr << "Error: Impossible sum up matrices which have different shape";
                 exit(1);
@@ -392,16 +445,38 @@ namespace matrix{
                 for (size_t i = 0; i < 3; ++i){
                     futures[i].wait();
                 }
-                auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<float> duration = end - start;
-                std::cout << "Sum up matrices with Four THREAD have taken " << duration.count() << " second" << std::endl;
                 return res;
             }
 
         }
+        void difference_some_row (const matrix& other, const matrix& res, size_t number_thread, size_t count_thread) const{
+            for (size_t i = (other.y_size / count_thread) * number_thread; i < (other.y_size / count_thread) * (number_thread + 1); ++i)
+                for (size_t j = 0; j < other.x_size; ++j)
+                    res.array[i][j] = array[i][j] -  other.array[i][j];
+        }
+        matrix<T> difference (const matrix& other, size_t count_thread) const {
+            if (this->x_size != other.x_size || this->y_size != other.y_size){
+                std::cerr << "Error: Impossible sum up matrices which have different shape";
+                exit(1);
+            }
+            else{
 
+                matrix res(this->y_size, other.x_size);
+                std::vector<std::thread> threads;
+                for (size_t i = 0; i < count_thread - 1; ++i)
+                {
+                    threads.emplace_back([this, &other, &res, i, count_thread](){ difference_some_row(other, res, i, count_thread);});
+                }
+                for (size_t i = (other.y_size / count_thread) * (count_thread - 1) ; i < (other.y_size / count_thread) * count_thread; ++i)
+                    for (size_t j = 0; j < other.x_size; ++j)
+                        res.array[i][j] = array[i][j] -  other.array[i][j];
+                for (size_t i = 0; i < count_thread - 1; ++i){
+                    threads[i].join();
+                }
+                return res;
+            }
+        }
         matrix<T> operator- (const matrix& other) const{
-            auto start = std::chrono::high_resolution_clock::now();
             if (this->x_size != other.x_size || this->y_size != other.y_size){
                 std::cerr << "Error: Impossible sum up matrices which have different shape";
                 exit(1);
@@ -422,19 +497,41 @@ namespace matrix{
                 for (size_t i = 0; i < 3; ++i){
                     futures[i].wait();
                 }
-                auto end = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<float> duration = end - start;
-                std::cout << "To calc difference matrices with Four THREAD have taken " << duration.count() << " second" << std::endl;
                 return res;
             }
         }
-        bool operator ==(const matrix& other) const{
+        bool equal (const matrix& other, size_t count_thread) const{
+            bool ans = true;
             if (this->x_size != other.x_size || this->y_size != other.y_size) return false;
-            for (size_t i = 0; i < other.y_size; ++i)
+            if (count_thread != 1){
+                std::vector<std::future<bool>> futures;
+                futures.reserve(count_thread);
+                for (size_t i = 0; i < count_thread; ++i){
+                    futures.emplace_back(std::async(std::launch::async, [this, &other, i, count_thread](){ return this->equal_some_rows(other, i, count_thread);}));
+                }
+                for (size_t i = 0; i < count_thread; ++i){
+                    ans *= futures[i].get();
+                }
+                return ans;
+            }
+            else{
+                for (size_t i = 0; i < other.y_size; ++i)
+                    for (size_t j = 0; j < other.x_size; ++j)
+                        if (array[i][j] != other.array[i][j])
+                            return false;
+                return true;
+            }
+
+        }
+        bool equal_some_rows(const matrix& other, size_t number_thread, size_t count_thread) const{
+            for (size_t i = (other.y_size / count_thread) * number_thread; i < (other.y_size / count_thread) * (number_thread + 1); ++i)
                 for (size_t j = 0; j < other.x_size; ++j)
                     if (array[i][j] != other.array[i][j])
                         return false;
             return true;
+        }
+        bool operator ==(const matrix& other) const{
+            return this->equal(other, 4);
         }
         bool operator !=(const matrix& other) const{
             return !(*this == other);
@@ -456,7 +553,6 @@ namespace matrix{
             catch(const std::exception& ex){
                 std::cerr << ex.what();
             }
-
         }
         static void ReadFromFile(std::istream &is,  matrix<T> &matrix){
             std::string str;
@@ -478,16 +574,15 @@ namespace matrix{
                 ++i;
             }
         }
-        static matrix<T> Random_matrix(size_t y_size, size_t x_size){
+        static matrix<T> RandomMatrix(size_t y_size, size_t x_size){
 //            srand (time(nullptr));
             matrix random_matrix(y_size, x_size);
             for (size_t i = 0; i < y_size; ++i){
                 for (size_t j = 0; j < x_size; ++j){
                     random_matrix.array[i][j] = rand();
                 }
-
             }
-            return random_matrix;
+            return static_cast<typename matrix::matrix<T>&&>(random_matrix);
         }
         friend std::istream &operator >>(std::istream &is,  matrix<T> &matrix) {
             size_t y_size, x_size;
